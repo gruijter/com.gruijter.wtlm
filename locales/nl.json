@@ -1,0 +1,41 @@
+{
+	"settings": {
+		"tab1": {
+			"title": "Instructies",
+			"useTitle": "Gebruik",
+			"useInstructions": "Installeer de Tank Level Meter binnen bereik van Homey (max. 10 meter). Voeg hem als apparaat toe aan Homey. Pas daarna de geavanceerde apparaatinstellingen aan op de grootte van je tank."
+		},
+		"tab2": {
+			"title": "Logs",
+			"logs": "Logs",
+			"deletelogs": "Logs verwijderen",
+			"deleteWarning": "Alle logs verwijderen?",
+			"deleted": "Logs verwijderd!"
+		}
+	},
+	"widgets": {
+		"noTank": "Geen tank gevonden",
+		"batteryOk": "Batterij OK",
+		"batteryLow": "Batterij bijna leeg",
+		"noRecentData": "Geen recente gegevens",
+		"justNow": "zojuist",
+		"minutesAgo": "__minutes__ min geleden",
+		"hoursAgo": "__hours__ u geleden",
+		"ofCapacity": "van __capacity__ L",
+		"volume": "Volume",
+		"temperature": "Temperatuur",
+		"airGap": "Luchtruimte",
+		"battery": "Batterij",
+		"ok": "OK",
+		"low": "Laag",
+		"history": "Historie",
+		"collecting": "Historie wordt verzameld",
+		"now": "nu",
+		"range24h": "24 u",
+		"range7d": "7 d",
+		"range30d": "30 d",
+		"ago24h": "24 u geleden",
+		"ago7d": "7 dagen geleden",
+		"ago30d": "30 dagen geleden"
+	}
+}

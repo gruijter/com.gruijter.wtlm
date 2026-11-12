@@ -2,7 +2,7 @@
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.gruijter.wtlm",
   "version": "1.4.1",
-  "compatibility": ">=8.0.0",
+  "compatibility": ">=12.3.0",
   "sdk": 3,
   "brandColor": "#009000",
   "name": {
@@ -269,6 +269,104 @@
       ]
     }
   ],
+  "widgets": {
+    "tank-details": {
+      "name": {
+        "en": "Tank details",
+        "fr": "Détails de la cuve",
+        "nl": "Tankdetails"
+      },
+      "settings": [
+        {
+          "id": "device",
+          "type": "autocomplete",
+          "title": {
+            "en": "Tank",
+            "fr": "Cuve",
+            "nl": "Tank"
+          },
+          "hint": {
+            "en": "Select the tank to show. When empty, the first tank is shown.",
+            "fr": "Choisissez la cuve à afficher. Si vide, la première cuve est affichée.",
+            "nl": "Kies de tank die getoond wordt. Leeg laten toont de eerste tank."
+          }
+        },
+        {
+          "id": "range",
+          "type": "dropdown",
+          "value": "7d",
+          "title": {
+            "en": "Default history range",
+            "fr": "Période d'historique par défaut",
+            "nl": "Standaard periode historie"
+          },
+          "values": [
+            {
+              "id": "24h",
+              "title": {
+                "en": "24 hours",
+                "fr": "24 heures",
+                "nl": "24 uur"
+              }
+            },
+            {
+              "id": "7d",
+              "title": {
+                "en": "7 days",
+                "fr": "7 jours",
+                "nl": "7 dagen"
+              }
+            },
+            {
+              "id": "30d",
+              "title": {
+                "en": "30 days",
+                "fr": "30 jours",
+                "nl": "30 dagen"
+              }
+            }
+          ]
+        }
+      ],
+      "api": {
+        "getTank": {
+          "method": "GET",
+          "path": "/tank"
+        }
+      },
+      "id": "tank-details"
+    },
+    "tank-level": {
+      "name": {
+        "en": "Tank level",
+        "fr": "Niveau de cuve",
+        "nl": "Tankniveau"
+      },
+      "settings": [
+        {
+          "id": "device",
+          "type": "autocomplete",
+          "title": {
+            "en": "Tank",
+            "fr": "Cuve",
+            "nl": "Tank"
+          },
+          "hint": {
+            "en": "Select the tank to show. When empty, the first tank is shown.",
+            "fr": "Choisissez la cuve à afficher. Si vide, la première cuve est affichée.",
+            "nl": "Kies de tank die getoond wordt. Leeg laten toont de eerste tank."
+          }
+        }
+      ],
+      "api": {
+        "getTank": {
+          "method": "GET",
+          "path": "/tank"
+        }
+      },
+      "id": "tank-level"
+    }
+  },
   "capabilities": {
     "air_gap": {
       "type": "number",

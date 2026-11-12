@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .label {
+      font-size: var(--homey-font-size-small);
+      line-height: var(--homey-line-height-small);
+      color: var(--homey-text-color-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ratio {
+      font-size: var(--homey-font-size-xxlarge);
+      font-weight: var(--homey-font-weight-bold);
+      line-height: var(--homey-line-height-xxlarge);
+    }
+
+    .unit {
+      font-size: var(--homey-font-size-large);
+      color: var(--homey-text-color-light);
+    }
+
+    .trend {
+      font-size: var(--homey-font-size-small);
+      line-height: var(--homey-line-height-small);
+      padding: 2px var(--homey-su-3);
+      border-radius: 999px;
+      background-color: var(--homey-color-mono-050, #f2f2f2);
+      color: var(--homey-text-color-light);
+    }
+
+    .trend.up { color: var(--homey-text-color-success); }
+    .trend.down { color: var(--homey-text-color-danger); }
+
+    .bar {
+      height: 6px;
+      margin: var(--homey-su-3) 0 var(--homey-su-4);
+      border-radius: 3px;
+      background-color: var(--homey-color-mono-050, #f2f2f2);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      width: 0;
+      height: 100%;
+      border-radius: 3px;
+      background-color: var(--homey-color-blue-500, #0082fa);
+      transition: width 1s ease-in-out;
+    }
+
+    .bar-fill.alarm { background-color: var(--homey-color-red-500, #f64a4a); }
+
+    .tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--homey-su-2);
+    }
+
+    .tile {
+      padding: var(--homey-su-2) var(--homey-su-3);
+      border-radius: var(--homey-border-radius-default);
+      background-color: var(--homey-color-mono-050, #f2f2f2);
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      margin: var(--homey-su-4) 0 var(--homey-su-1);
+    }
+
+    .ranges span {
+      margin-left: var(--homey-su-2);
+      cursor: pointer;
+    }
+
+    .ranges span.active {
+      color: var(--homey-text-color);
+      font-weight: var(--homey-font-weight-medium);
+    }
+
+    .chart {
+      display: block;
+      width: 100%;
+      height: 80px;
+    }
+
+    .grid-line { stroke: var(--homey-line-color-light, #e6e6e6); stroke-width: 0.5; }
+    .area { fill: var(--homey-color-blue-500, #0082fa); opacity: 0.14; }
+    .line { fill: none; stroke: var(--homey-color-blue-500, #0082fa); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+    .alarm-line { stroke: var(--homey-color-red-500, #f64a4a); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+
+    .axis {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .ok { color: var(--homey-text-color-success); }
+    .warning { color: var(--homey-text-color-danger); }
+  </style>
+</head>
+
+<body class="homey-widget">
+  <div class="header">
+    <div>
+      <div id="name" class="label"></div>
+      <div class="ratio"><span id="ratio">-</span><span class="unit"> %</span></div>
+    </div>
+    <span id="trend" class="trend"></span>
+  </div>
+
+  <div class="bar"><div id="bar" class="bar-fill"></div></div>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="label" data-t="volume"></div>
+      <div id="volume" class="homey-text-medium">-</div>
+    </div>
+    <div class="tile">
+      <div class="label" data-t="temperature"></div>
+      <div id="temperature" class="homey-text-medium">-</div>
+    </div>
+    <div class="tile">
+      <div class="label" data-t="airGap"></div>
+      <div id="air-gap" class="homey-text-medium">-</div>
+    </div>
+    <div class="tile">
+      <div class="label" data-t="battery"></div>
+      <div id="battery" class="homey-text-medium">-</div>
+    </div>
+  </div>
+
+  <div class="history-header">
+    <span class="label" data-t="history"></span>
+    <span id="ranges" class="label ranges">
+      <span data-range="24h" data-t="range24h"></span><span data-range="7d" data-t="range7d"></span><span data-range="30d" data-t="range30d"></span>
+    </span>
+  </div>
+
+  <svg class="chart" viewBox="0 0 260 80" preserveAspectRatio="none">
+    <line class="grid-line" x1="0" y1="6" x2="260" y2="6" />
+    <line class="grid-line" x1="0" y1="38" x2="260" y2="38" />
+    <line class="grid-line" x1="0" y1="70" x2="260" y2="70" />
+    <path id="area" class="area" />
+    <path id="line" class="line" />
+    <line id="alarm-line" class="alarm-line" x1="0" x2="260" />
+  </svg>
+
+  <div class="axis label">
+    <span id="axis-start"></span>
+    <span id="axis-end" data-t="now"></span>
+  </div>
+
+  <script type="text/javascript">
+    const REFRESH_INTERVAL = 60 * 1000;
+    const RANGES = {
+      '24h': { duration: 24 * 60 * 60 * 1000, label: 'ago24h', short: 'range24h' },
+      '7d': { duration: 7 * 24 * 60 * 60 * 1000, label: 'ago7d', short: 'range7d' },
+      '30d': { duration: 30 * 24 * 60 * 60 * 1000, label: 'ago30d', short: 'range30d' },
+    };
+
+    let tank = null;
+    let range = '7d';
+    let t = (key) => key;
+
+    // map a fill ratio (0 - 100 %) to the chart height (top 6, bottom 70)
+    const toY = (ratio) => 70 - (64 * Math.min(Math.max(ratio, 0), 100)) / 100;
+
+    function renderChart() {
+      const now = Date.now();
+      const { duration, label, short } = RANGES[range];
+      const points = (tank && tank.history ? tank.history : []).filter(([time]) => now - time <= duration);
+      if (tank && typeof tank.fillRatio === 'number') points.push([now, tank.fillRatio]);
+
+      document.querySelectorAll('#ranges span').forEach((el) => el.classList.toggle('active', el.dataset.range === range));
+      document.getElementById('axis-start').innerText = t(label);
+
+      const alarmY = toY(tank && typeof tank.alarmLevel === 'number' ? tank.alarmLevel : 0);
+      const alarmLine = document.getElementById('alarm-line');
+      alarmLine.setAttribute('y1', alarmY);
+      alarmLine.setAttribute('y2', alarmY);
+
+      const trend = document.getElementById('trend');
+      if (points.length < 2) {
+        document.getElementById('line').setAttribute('d', '');
+        document.getElementById('area').setAttribute('d', '');
+        trend.innerText = t('collecting');
+        trend.className = 'trend';
+        return;
+      }
+
+      const coords = points.map(([time, ratio]) => [(260 * (time - (now - duration))) / duration, toY(ratio)]);
+      const line = coords.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+      document.getElementById('line').setAttribute('d', line);
+      document.getElementById('area').setAttribute('d', `${line} L${coords[coords.length - 1][0].toFixed(1)} 70 L${coords[0][0].toFixed(1)} 70 Z`);
+
+      const delta = points[points.length - 1][1] - points[0][1];
+      trend.innerText = `${delta > 0 ? '+' : ''}${delta} % / ${t(short)}`;
+      trend.className = `trend ${delta > 0 ? 'up' : ''}${delta < 0 ? 'down' : ''}`;
+    }
+
+    function render() {
+      if (!tank) {
+        document.getElementById('name').innerText = t('noTank');
+        return;
+      }
+      const hasRatio = typeof tank.fillRatio === 'number';
+      document.getElementById('name').innerText = tank.available ? tank.name : `${tank.name} · ${t('noRecentData')}`;
+      document.getElementById('ratio').innerText = hasRatio ? tank.fillRatio : '-';
+
+      const bar = document.getElementById('bar');
+      bar.style.width = `${hasRatio ? Math.min(Math.max(tank.fillRatio, 0), 100) : 0}%`;
+      bar.classList.toggle('alarm', tank.alarmWater === true);
+
+      document.getElementById('volume').innerText = typeof tank.volume === 'number' ? `${tank.volume} / ${tank.capacity} L` : '-';
+      document.getElementById('temperature').innerText = typeof tank.temperature === 'number' ? `${tank.temperature.toFixed(1)} °C` : '-';
+      document.getElementById('air-gap').innerText = typeof tank.airGap === 'number' ? `${tank.airGap} cm` : '-';
+      const battery = document.getElementById('battery');
+      battery.innerText = t(tank.alarmBattery ? 'low' : 'ok');
+      battery.className = `homey-text-medium ${tank.alarmBattery ? 'warning' : 'ok'}`;
+
+      renderChart();
+    }
+
+    function onHomeyReady(Homey) {
+      t = (key, tokens) => Homey.__(`widgets.${key}`, tokens);
+      document.querySelectorAll('[data-t]').forEach((el) => {
+        el.innerText = t(el.dataset.t);
+      });
+
+      const settings = Homey.getSettings();
+      const deviceId = settings.device && settings.device.id ? settings.device.id : '';
+      if (RANGES[settings.range]) range = settings.range;
+
+      document.querySelectorAll('#ranges span').forEach((el) => {
+        el.addEventListener('click', () => {
+          range = el.dataset.range;
+          renderChart();
+        });
+      });
+
+      const update = () => Homey.api('GET', `/tank?id=${encodeURIComponent(deviceId)}`)
+        .then((result) => {
+          tank = result;
+          render();
+        })
+        .catch(console.error);
+
+      update().finally(() => Homey.ready({ height: document.body.scrollHeight }));
+      setInterval(update, REFRESH_INTERVAL);
+    }
+  </script>
+</body>
+
+</html>

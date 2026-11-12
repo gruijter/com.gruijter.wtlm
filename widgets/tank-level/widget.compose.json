@@ -1,0 +1,29 @@
+{
+  "name": {
+    "en": "Tank level",
+    "fr": "Niveau de cuve",
+    "nl": "Tankniveau"
+  },
+  "settings": [
+    {
+      "id": "device",
+      "type": "autocomplete",
+      "title": {
+        "en": "Tank",
+        "fr": "Cuve",
+        "nl": "Tank"
+      },
+      "hint": {
+        "en": "Select the tank to show. When empty, the first tank is shown.",
+        "fr": "Choisissez la cuve à afficher. Si vide, la première cuve est affichée.",
+        "nl": "Kies de tank die getoond wordt. Leeg laten toont de eerste tank."
+      }
+    }
+  ],
+  "api": {
+    "getTank": {
+      "method": "GET",
+      "path": "/tank"
+    }
+  }
+}

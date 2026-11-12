@@ -1,0 +1,41 @@
+{
+	"settings": {
+		"tab1": {
+			"title": "Instructions",
+			"useTitle": "Utilisation",
+			"useInstructions": "Installez le Tank Level Meter à portée de Homey (10 mètres max.). Ajoutez-le à Homey comme appareil. Modifiez ensuite les réglages avancés de l'appareil selon la taille de votre cuve."
+		},
+		"tab2": {
+			"title": "Journaux",
+			"logs": "Journaux",
+			"deletelogs": "Supprimer les journaux",
+			"deleteWarning": "Supprimer tous les journaux ?",
+			"deleted": "Journaux supprimés !"
+		}
+	},
+	"widgets": {
+		"noTank": "Aucune cuve trouvée",
+		"batteryOk": "Pile OK",
+		"batteryLow": "Pile faible",
+		"noRecentData": "Pas de données récentes",
+		"justNow": "à l'instant",
+		"minutesAgo": "il y a __minutes__ min",
+		"hoursAgo": "il y a __hours__ h",
+		"ofCapacity": "sur __capacity__ L",
+		"volume": "Volume",
+		"temperature": "Température",
+		"airGap": "Vide d'air",
+		"battery": "Pile",
+		"ok": "OK",
+		"low": "Faible",
+		"history": "Historique",
+		"collecting": "Historique en cours",
+		"now": "maintenant",
+		"range24h": "24 h",
+		"range7d": "7 j",
+		"range30d": "30 j",
+		"ago24h": "il y a 24 h",
+		"ago7d": "il y a 7 jours",
+		"ago30d": "il y a 30 jours"
+	}
+}

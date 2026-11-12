@@ -12,5 +12,30 @@
 			"deleteWarning": "Delete all logs?",
 			"deleted": "Logs deleted!"
 		}
+	},
+	"widgets": {
+		"noTank": "No tank found",
+		"batteryOk": "Battery OK",
+		"batteryLow": "Battery low",
+		"noRecentData": "No recent data",
+		"justNow": "just now",
+		"minutesAgo": "__minutes__ min ago",
+		"hoursAgo": "__hours__ h ago",
+		"ofCapacity": "of __capacity__ L",
+		"volume": "Volume",
+		"temperature": "Temperature",
+		"airGap": "Air gap",
+		"battery": "Battery",
+		"ok": "OK",
+		"low": "Low",
+		"history": "History",
+		"collecting": "Collecting history",
+		"now": "now",
+		"range24h": "24 h",
+		"range7d": "7 d",
+		"range30d": "30 d",
+		"ago24h": "24 h ago",
+		"ago7d": "7 days ago",
+		"ago30d": "30 days ago"
 	}
 }
