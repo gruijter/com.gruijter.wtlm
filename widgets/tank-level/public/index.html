@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    @keyframes wave {
+      from { transform: translateX(0); }
+      to { transform: translateX(-48px); }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .label {
+      font-size: var(--homey-font-size-small);
+      line-height: var(--homey-line-height-small);
+      color: var(--homey-text-color-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ratio {
+      font-size: var(--homey-font-size-xxlarge);
+      font-weight: var(--homey-font-weight-bold);
+      line-height: var(--homey-line-height-xxlarge);
+    }
+
+    .unit {
+      font-size: var(--homey-font-size-large);
+      color: var(--homey-text-color-light);
+    }
+
+    .volume {
+      text-align: right;
+    }
+
+    .scene {
+      display: block;
+      width: 100%;
+      margin-top: var(--homey-su-2);
+    }
+
+    .soil { fill: var(--homey-color-mono-050, #f2f2f2); }
+    .layer { fill: var(--homey-color-mono-100, #e6e6e6); opacity: 0.6; }
+    .grass { fill: var(--homey-color-green-500, #44b56d); }
+    .manhole { fill: var(--homey-background-color, #fff); stroke: var(--homey-color-mono-300, #b3b3b3); stroke-width: 1; }
+    .lid { fill: var(--homey-color-mono-500, #808080); }
+    .tank-inside { fill: var(--homey-background-color, #fff); }
+    .tank-wall { fill: none; stroke: var(--homey-color-mono-500, #808080); stroke-width: 1.2; }
+    .tick { stroke: var(--homey-color-mono-300, #b3b3b3); stroke-width: 1; }
+    .sensor { fill: var(--homey-color-blue-500, #0082fa); }
+    .beam { stroke: var(--homey-color-blue-500, #0082fa); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.6; }
+    .wave-front { fill: var(--homey-color-blue-500, #0082fa); }
+    .wave-back { fill: var(--homey-color-blue-200, #99cdfd); }
+    .alarm .wave-front { fill: var(--homey-color-red-500, #f64a4a); }
+    .alarm .wave-back { fill: var(--homey-color-red-200, #fbb5b5); }
+
+    .level {
+      transition: transform 1.5s ease-in-out;
+    }
+
+    .wave-front-move { animation: wave 3.2s linear infinite; }
+    .wave-back-move { animation: wave 5s linear infinite reverse; }
+
+    .footer {
+      display: flex;
+      gap: var(--homey-su-4);
+      margin-top: var(--homey-su-2);
+      font-size: var(--homey-font-size-small);
+      line-height: var(--homey-line-height-small);
+      color: var(--homey-text-color-light);
+    }
+
+    .footer .last {
+      margin-left: auto;
+    }
+
+    .ok { color: var(--homey-text-color-success); }
+    .warning { color: var(--homey-text-color-danger); }
+  </style>
+</head>
+
+<body class="homey-widget">
+  <div class="header">
+    <div>
+      <div id="name" class="label"></div>
+      <div class="ratio"><span id="ratio">-</span><span class="unit"> %</span></div>
+    </div>
+    <div class="volume">
+      <div id="volume" class="homey-text-medium"></div>
+      <div id="capacity" class="label"></div>
+    </div>
+  </div>
+
+  <svg id="scene" class="scene" viewBox="0 0 260 130">
+    <defs>
+      <clipPath id="tank-clip">
+        <rect x="40" y="46" width="180" height="76" rx="38" />
+      </clipPath>
+    </defs>
+    <rect class="soil" x="0" y="22" width="260" height="108" rx="10" />
+    <rect class="layer" x="0" y="60" width="260" height="70" />
+    <rect class="layer" x="0" y="98" width="260" height="32" />
+    <rect class="grass" x="0" y="20" width="260" height="3" rx="1.5" />
+    <rect class="manhole" x="116" y="18" width="28" height="30" rx="3" />
+    <rect class="lid" x="112" y="15" width="36" height="4" rx="2" />
+    <rect class="tank-inside" x="40" y="46" width="180" height="76" rx="38" />
+    <g clip-path="url(#tank-clip)">
+      <g id="level" class="level" style="transform: translateY(122px)">
+        <g class="wave-back-move"><path id="wave-back" class="wave-back" /></g>
+        <g class="wave-front-move"><path id="wave-front" class="wave-front" /></g>
+      </g>
+    </g>
+    <rect class="tank-wall" x="40" y="46" width="180" height="76" rx="38" />
+    <line class="tick" x1="226" y1="60" x2="232" y2="60" />
+    <line class="tick" x1="226" y1="84" x2="232" y2="84" />
+    <line class="tick" x1="226" y1="108" x2="232" y2="108" />
+    <line id="beam" class="beam" x1="130" y1="30" x2="130" y2="122" />
+    <circle class="sensor" cx="130" cy="26" r="3.5" />
+  </svg>
+
+  <div class="footer">
+    <span id="temperature"></span>
+    <span id="battery"></span>
+    <span id="last" class="last"></span>
+  </div>
+
+  <script type="text/javascript">
+    const REFRESH_INTERVAL = 60 * 1000;
+    const TANK_TOP = 46;
+    const TANK_BOTTOM = 122;
+    let t = (key) => key;
+
+    // a seamless wave: half waves of 24 units wide, shifted 48 units by the animation
+    function wavePath(amplitude, offset) {
+      let path = `M0 ${offset}`;
+      for (let x = 0; x < 312; x += 24) {
+        path += ` q12 ${x % 48 === 0 ? -amplitude : amplitude} 24 0`;
+      }
+      return `${path} V200 H0 Z`;
+    }
+
+    function timeAgo(timestamp) {
+      if (!timestamp) return '';
+      const minutes = Math.round((Date.now() - timestamp) / 60000);
+      if (minutes < 1) return t('justNow');
+      if (minutes < 60) return t('minutesAgo', { minutes });
+      return t('hoursAgo', { hours: Math.round(minutes / 60) });
+    }
+
+    function render(tank) {
+      if (!tank) {
+        document.getElementById('name').innerText = t('noTank');
+        return;
+      }
+      const hasRatio = typeof tank.fillRatio === 'number';
+      const fillRatio = hasRatio ? Math.min(Math.max(tank.fillRatio, 0), 100) : 0;
+      const surface = TANK_BOTTOM - ((TANK_BOTTOM - TANK_TOP) * fillRatio) / 100;
+
+      document.getElementById('name').innerText = tank.name;
+      document.getElementById('ratio').innerText = hasRatio ? tank.fillRatio : '-';
+      document.getElementById('volume').innerText = typeof tank.volume === 'number' ? `${tank.volume} L` : '';
+      document.getElementById('capacity').innerText = t('ofCapacity', { capacity: tank.capacity });
+      document.getElementById('level').style.transform = `translateY(${surface}px)`;
+      document.getElementById('beam').setAttribute('y2', surface);
+      document.getElementById('scene').classList.toggle('alarm', tank.alarmWater === true);
+
+      document.getElementById('temperature').innerText = typeof tank.temperature === 'number' ? `${tank.temperature.toFixed(1)} °C` : '';
+      const battery = document.getElementById('battery');
+      battery.innerText = t(tank.alarmBattery ? 'batteryLow' : 'batteryOk');
+      battery.className = tank.alarmBattery ? 'warning' : 'ok';
+      const last = document.getElementById('last');
+      last.innerText = tank.available ? timeAgo(tank.lastUpdated) : t('noRecentData');
+      last.classList.toggle('warning', !tank.available);
+    }
+
+    function onHomeyReady(Homey) {
+      t = (key, tokens) => Homey.__(`widgets.${key}`, tokens);
+      document.getElementById('wave-back').setAttribute('d', wavePath(3, -1));
+      document.getElementById('wave-front').setAttribute('d', wavePath(4, 1));
+
+      const settings = Homey.getSettings();
+      const deviceId = settings.device && settings.device.id ? settings.device.id : '';
+
+      const update = () => Homey.api('GET', `/tank?id=${encodeURIComponent(deviceId)}`)
+        .then(render)
+        .catch(console.error);
+
+      update().finally(() => Homey.ready({ height: document.body.scrollHeight }));
+      setInterval(update, REFRESH_INTERVAL);
+    }
+  </script>
+</body>
+
+</html>

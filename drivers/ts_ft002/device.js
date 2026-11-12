@@ -106,12 +106,25 @@ class MyDevice extends Homey.Device {
     }
   }
 
+  // keep one fill ratio sample per hour for the last 30 days (used by the dashboard widgets)
+  addHistory(fillRatio) {
+    const now = Date.now();
+    const history = this.getStoreValue('history') || [];
+    const last = history[history.length - 1];
+    if (last && (now - last[0]) < 60 * 60 * 1000) return;
+    history.push([now, fillRatio]);
+    while (history.length && (now - history[0][0]) > 30 * 24 * 60 * 60 * 1000) history.shift();
+    this.setStoreValue('history', history).catch(this.error);
+  }
+
   handleInfo(info) {
     try {
       const {
         tank_capacity: tankCapacity, max_air_gap: maxAirGap, min_air_gap: minAirGap, alarm_level: alarmLevel,
         ignore_out_of_range: ignoreOOR,
       } = this.getSettings();
+
+      this.lastUpdated = Date.now();
 
       // update temp and bat state
       const lowBat = info.batState !== 8;
@@ -131,6 +144,7 @@ class MyDevice extends Homey.Device {
         this.setCapability('fill_ratio', fillRatio);
         this.setCapability('meter_water', waterMeter);
         this.setCapability('alarm_water', waterAlarm);
+        this.addHistory(fillRatio);
 
         // trigger custom capability flow cards
         if (info.airGap !== this.getCapabilityValue('air_gap')) {

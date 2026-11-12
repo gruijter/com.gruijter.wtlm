@@ -1,7 +1,7 @@
 {
   "id": "com.gruijter.wtlm",
   "version": "1.4.1",
-  "compatibility": ">=8.0.0",
+  "compatibility": ">=12.3.0",
   "sdk": 3,
   "brandColor": "#009000",
   "name": {

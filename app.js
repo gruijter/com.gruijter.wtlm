@@ -29,6 +29,14 @@ class App extends Homey.App {
     if (!this.logger) this.logger = new Logger({ name: 'log', length: 500, homey: this.homey });
     this.log('Wireless Tank Level Meter app is running...');
 
+    // provide the tank list for the widget settings
+    ['tank-level', 'tank-details'].forEach((widgetId) => {
+      this.homey.dashboards.getWidget(widgetId)
+        .registerSettingAutocompleteListener('device', async (query) => this.homey.drivers.getDriver('ts_ft002').getDevices()
+          .map((device) => ({ name: device.getName(), id: String(device.getData().id) }))
+          .filter((item) => item.name.toLowerCase().includes(query.toLowerCase())));
+    });
+
     // register some listeners
     this.homey
       .on('unload', async () => {
@@ -54,6 +62,29 @@ class App extends Homey.App {
 
   getLogs() {
     return this.logger.logArray;
+  }
+
+  //  stuff for the dashboard widgets
+  getWidgetData(id, withHistory) {
+    const devices = this.homey.drivers.getDriver('ts_ft002').getDevices();
+    if (!devices.length) return null;
+    const device = devices.find((dev) => String(dev.getData().id) === id) || devices[0];
+    const { tank_capacity: capacity, alarm_level: alarmLevel } = device.getSettings();
+    const waterMeter = device.getCapabilityValue('meter_water'); // in m3
+    return {
+      name: device.getName(),
+      available: device.getAvailable(),
+      lastUpdated: device.lastUpdated || null,
+      fillRatio: device.getCapabilityValue('fill_ratio'),
+      volume: typeof waterMeter === 'number' ? Math.round(waterMeter * 1000) : null, // in liter
+      capacity,
+      alarmLevel,
+      airGap: device.getCapabilityValue('air_gap'),
+      temperature: device.getCapabilityValue('measure_temperature'),
+      alarmWater: device.getCapabilityValue('alarm_water'),
+      alarmBattery: device.getCapabilityValue('alarm_battery'),
+      history: withHistory ? (device.getStoreValue('history') || []) : undefined,
+    };
   }
 
 }
